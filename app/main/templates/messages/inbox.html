@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-2xl font-bold mb-4">Messages</h1>
+    <div class="bg-white shadow rounded">
+        <ul class="divide-y">
+            {% for item in conversations %}
+            <li class="p-4 flex justify-between items-center">
+                <div>
+                    <a href="{{ url_for('main.messages_view', conv_id=item.conversation.id) }}" class="font-medium text-indigo-600">{{ item.conversation.title or 'Conversation' }}</a>
+                    <p class="text-sm text-gray-600">{{ item.last_message.sender.username if item.last_message else '' }}: {{ item.last_message.body[:80] if item.last_message else 'No messages yet' }}</p>
+                </div>
+                <div class="text-right">
+                    {% if item.unread %}
+                        <span class="inline-block bg-red-100 text-red-700 text-xs px-2 py-1 rounded">{{ item.unread }}</span>
+                    {% endif %}
+                    <div class="text-xs text-gray-400">{{ item.last_message.created_at.strftime('%Y-%m-%d %H:%M') if item.last_message else '' }}</div>
+                </div>
+            </li>
+            {% else %}
+            <li class="p-6 text-center text-gray-500">No conversations yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    <div class="mt-4">
+        <a href="{{ url_for('main.messages_new') }}" class="px-4 py-2 bg-indigo-600 text-white rounded">New Message</a>
+    </div>
+</div>
+{% endblock %}

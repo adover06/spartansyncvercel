@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold">Announcements</h1>
+    {% if current_user.role == 'instructor' %}
+        <a href="{{ url_for('main.announcement_create') }}" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">New Announcement</a>
+    {% endif %}
+</div>
+
+<div class="space-y-4">
+    {% for note in announcements %}
+        <div class="bg-white rounded-lg shadow p-5 hover:shadow-md transition-shadow">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-sm text-gray-500">
+                        {{ note.created_at.strftime('%b %d, %Y %I:%M %p') }} • {{ note.course.course_name if note.course else 'General' }}
+                    </p>
+                    <a href="{{ url_for('main.announcement_detail', announcement_id=note.id) }}" class="text-xl font-semibold text-gray-900 mt-1 block hover:underline">
+                        {{ note.title }}
+                    </a>
+                </div>
+                {% if current_user.role == 'instructor' %}
+                    <form method="POST" action="{{ url_for('main.announcement_delete', announcement_id=note.id) }}" onsubmit="return confirm('Delete this announcement?');">
+                        <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
+                    </form>
+                {% endif %}
+            </div>
+            <p class="text-gray-600 mt-2">{{ note.body[:200] }}{% if note.body|length > 200 %}...{% endif %}</p>
+        </div>
+    {% else %}
+        <p class="text-sm text-gray-500">No announcements yet.</p>
+    {% endfor %}
+</div>
+{% endblock %}
+

@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+.DS_Store
+.github/
+add_test_data.py
+app/app.db
+instance/app.db
+.env

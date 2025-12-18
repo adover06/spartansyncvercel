@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <p class="text-sm text-gray-500">
+                    {% if assignment.course %}
+                        <a href="{{ url_for('main.course_detail', course_id=assignment.course.id) }}" class="text-indigo-600 hover:underline">
+                            {{ assignment.course.course_name }}
+                        </a>
+                    {% else %}
+                        General
+                    {% endif %}
+                </p>
+                <h1 class="text-3xl font-bold text-gray-900">{{ assignment.title }}</h1>
+                <p class="text-gray-600 mt-2 whitespace-pre-line">{{ assignment.description }}</p>
+            </div>
+            <div class="text-sm text-gray-600">
+                <p><span class="font-semibold">Due:</span> {{ assignment.due_date.strftime('%b %d, %Y %I:%M %p') }}</p>
+                <p><span class="font-semibold">Points:</span> {{ assignment.points }}</p>
+                <p><span class="font-semibold">Status:</span> {{ assignment.status }}</p>
+            </div>
+            {% if current_user.role == 'instructor' %}
+                <form method="POST" action="{{ url_for('main.assignment_delete', assignment_id=assignment.id) }}" onsubmit="return confirm('Delete this assignment?');">
+                    <button type="submit" class="text-sm text-red-600 hover:underline">Delete Assignment</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if assignment.rubric_criteria %}
+        <div class="bg-white shadow rounded-lg p-6">
+            <h2 class="text-xl font-semibold mb-4">Rubric</h2>
+            <div class="divide-y divide-gray-200">
+                {% for criterion in assignment.rubric_criteria %}
+                    <div class="py-3 flex justify-between">
+                        <div>
+                            <p class="font-medium text-gray-900">{{ criterion.title }}</p>
+                            <p class="text-sm text-gray-600">{{ criterion.description }}</p>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            {{ criterion.max_points }} pts
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {% if current_user.role == 'student' %}
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Your Submission</h2>
+                {% if submission %}
+                    <p class="text-sm text-gray-500 mb-2">
+                        Last updated {{ submission.submitted_at.strftime('%b %d, %Y %I:%M %p') if submission.submitted_at else 'Not submitted' }}
+                    </p>
+                    {% if submission.score is not none %}
+                        <p class="text-sm text-green-700 mb-4">Score: {{ submission.score }} / {{ assignment.points }}</p>
+                    {% endif %}
+                {% endif %}
+                <form method="POST">
+                    {{ submission_form.hidden_tag() }}
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ submission_form.content.label }}</label>
+                    {{ submission_form.content(class="w-full min-h-[150px] border border-gray-300 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+                    {% if submission_form.content.errors %}
+                        <p class="text-sm text-red-600 mt-1">{{ submission_form.content.errors[0] }}</p>
+                    {% endif %}
+                    <div class="mt-4">
+                        {{ submission_form.submit(class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700") }}
+                    </div>
+                </form>
+            </div>
+        {% else %}
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Add Rubric Criterion</h2>
+                <form method="POST">
+                    {{ rubric_form.hidden_tag() }}
+                    {{ rubric_form.assignment_id(value=assignment.id) }}
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ rubric_form.title.label }}</label>
+                            {{ rubric_form.title(class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ rubric_form.description.label }}</label>
+                            {{ rubric_form.description(class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">{{ rubric_form.max_points.label }}</label>
+                            {{ rubric_form.max_points(class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500") }}
+                        </div>
+                        <div>
+                            {{ rubric_form.submit(class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+
+        {% if current_user.role in ['instructor', 'ta'] %}
+            <div class="bg-white shadow rounded-lg p-6 lg:col-span-1">
+                <h2 class="text-xl font-semibold mb-4">Submissions</h2>
+                {% if submissions %}
+                    <div class="space-y-4">
+                        {% for sub in submissions %}
+                            <div class="border border-gray-100 rounded-md p-4">
+                                <div class="flex items-center justify-between text-sm text-gray-600">
+                                    <p class="font-semibold">{{ sub.student.username }}</p>
+                                    <p>{{ sub.submitted_at.strftime('%b %d, %I:%M %p') if sub.submitted_at else 'Not submitted' }}</p>
+                                </div>
+                                <p class="mt-2 text-gray-700 whitespace-pre-line">{{ sub.content }}</p>
+                                <form method="POST" action="{{ url_for('main.grade_submission', assignment_id=assignment.id) }}" class="mt-3 space-y-2">
+                                    <input type="hidden" name="submission_id" value="{{ sub.id }}">
+                                    {% for criterion in assignment.rubric_criteria %}
+                                        <div>
+                                            <label class="text-sm text-gray-700">{{ criterion.title }} ({{ criterion.max_points }} pts)</label>
+                                            <input
+                                                type="number"
+                                                name="criterion_{{ criterion.id }}"
+                                                min="0"
+                                                max="{{ criterion.max_points }}"
+                                                value="{{ sub.rubric_scores.get(criterion.id) if sub.rubric_scores }}"
+                                                class="mt-1 w-full border border-gray-300 rounded px-2 py-1"
+                                            >
+                                        </div>
+                                    {% endfor %}
+                                    <button type="submit" class="w-full px-3 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+                                        Save Grade
+                                    </button>
+                                    {% if sub.score is not none %}
+                                        <p class="text-sm text-green-700 text-right">Score: {{ sub.score }} / {{ assignment.points }}</p>
+                                    {% endif %}
+                                </form>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-sm text-gray-500">No submissions yet.</p>
+                {% endif %}
+            </div>
+        {% elif submission %}
+            <div class="bg-white shadow rounded-lg p-6">
+                <h2 class="text-xl font-semibold mb-4">Rubric Feedback</h2>
+                {% if submission.rubric_scores %}
+                    <ul class="space-y-2">
+                        {% for criterion in assignment.rubric_criteria %}
+                            {% set score = submission.rubric_scores.get(criterion.id) if submission.rubric_scores %}
+                            <li class="flex justify-between text-sm text-gray-700">
+                                <span>{{ criterion.title }}</span>
+                                <span>{{ score or 0 }} / {{ criterion.max_points }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p class="text-sm text-gray-500">Rubric scores not posted yet.</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

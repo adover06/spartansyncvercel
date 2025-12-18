@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white shadow rounded-lg p-8">
+    <p class="text-sm text-gray-500">{{ announcement.created_at.strftime('%b %d, %Y %I:%M %p') }}</p>
+    <h1 class="text-3xl font-bold text-gray-900 mt-1">{{ announcement.title }}</h1>
+    <p class="text-sm text-gray-500 mb-4">
+        Posted by {{ announcement.author.username }}
+        {% if announcement.course %}
+            · <a href="{{ url_for('main.course_detail', course_id=announcement.course.id) }}" class="text-indigo-600 hover:underline">
+                {{ announcement.course.course_name }}
+              </a>
+        {% else %}
+            · General
+        {% endif %}
+    </p>
+    <div class="prose max-w-none">
+        {{ announcement.body | replace('\n', '<br>') | safe }}
+    </div>
+    <div class="mt-6 flex items-center justify-between">
+        <a href="{{ url_for('main.announcements') }}" class="text-sm text-blue-600 hover:underline">← Back to announcements</a>
+        {% if current_user.role == 'instructor' %}
+            <form method="POST" action="{{ url_for('main.announcement_delete', announcement_id=announcement.id) }}" onsubmit="return confirm('Delete this announcement?');">
+                <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+

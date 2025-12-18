@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto space-y-6">
+    <div>
+        <h1 class="text-3xl font-bold">Manage Enrollment</h1>
+        <p class="text-sm text-gray-500 mt-1">Select the courses you want to enroll in. Enrolled courses appear on your home page and dashboard.</p>
+    </div>
+
+    <form method="POST" class="bg-white rounded-lg shadow p-6">
+        {{ form.hidden_tag() }}
+
+        <div class="space-y-3">
+            {% for course in courses %}
+            <label class="flex items-start p-4 bg-gray-50 rounded-lg border-2 cursor-pointer hover:bg-gray-100 transition-colors {% if course.id in selected_ids %}border-indigo-500 bg-indigo-50{% else %}border-transparent{% endif %}">
+                <input type="checkbox"
+                       name="courses"
+                       value="{{ course.id }}"
+                       {% if course.id in selected_ids %}checked{% endif %}
+                       class="mt-1 w-5 h-5 text-indigo-600 rounded focus:ring-indigo-500">
+                <div class="ml-4 flex-1">
+                    <div class="flex items-center justify-between">
+                        <p class="font-semibold text-gray-900">{{ course.course_name }}</p>
+                        <span class="text-xs uppercase tracking-wide text-gray-500">{{ course.course_code }}</span>
+                    </div>
+                    <p class="text-sm text-gray-600 mt-1">{{ course.description or 'No description provided.' }}</p>
+                </div>
+            </label>
+            {% else %}
+            <div class="text-center py-8 text-gray-500">
+                <p>No courses available yet.</p>
+                {% if current_user.role == 'instructor' %}
+                <a href="{{ url_for('main.course_create') }}" class="text-indigo-600 hover:underline">Create the first course</a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if courses %}
+        <div class="mt-6 flex items-center justify-between">
+            <a href="{{ url_for('main.home') }}" class="text-sm text-gray-500 hover:underline">Cancel</a>
+            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
+                Save Enrollment
+            </button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

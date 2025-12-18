@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h1 class="text-3xl font-bold">Assignments</h1>
+    {% if current_user.role == 'instructor' %}
+        <a href="{{ url_for('main.assignment_create') }}" class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700">
+            New Assignment
+        </a>
+    {% endif %}
+</div>
+
+<div class="bg-white shadow rounded-lg divide-y divide-gray-100">
+    {% for assignment in assignments %}
+        <div class="p-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <a href="{{ url_for('main.assignment_detail', assignment_id=assignment.id) }}" class="text-xl font-semibold text-gray-900 hover:underline">
+                    {{ assignment.title }}
+                </a>
+                <p class="text-xs uppercase tracking-wide text-gray-500">
+                    {{ assignment.course.course_name if assignment.course else 'General' }}
+                </p>
+                <p class="text-sm text-gray-500">
+                    Due {{ assignment.due_date.strftime('%b %d, %Y %I:%M %p') }} · {{ assignment.points }} pts
+                </p>
+            </div>
+            <div class="flex items-center gap-3 flex-wrap">
+                <span class="text-xs px-3 py-1 rounded-full {{ assignment.progress_badge.class }}">
+                    {{ assignment.progress_badge.label }}
+                </span>
+                <a href="{{ url_for('main.assignment_detail', assignment_id=assignment.id) }}" class="text-sm text-blue-600 hover:underline">
+                    View details
+                </a>
+                {% if current_user.role == 'instructor' %}
+                    <form method="POST" action="{{ url_for('main.assignment_delete', assignment_id=assignment.id) }}" onsubmit="return confirm('Delete this assignment?');">
+                        <button type="submit" class="text-sm text-red-600 hover:underline">Delete</button>
+                    </form>
+                {% endif %}
+            </div>
+        </div>
+    {% else %}
+        <div class="p-5 text-sm text-gray-500">
+            No assignments found.
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
+

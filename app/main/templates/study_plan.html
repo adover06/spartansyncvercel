@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <h1 class="text-3xl font-bold mb-6">Study Plan</h1>
+
+    <form method="POST" class="mb-6">
+        <label for="topics" class="block text-sm font-medium text-gray-700 mb-2">
+            Any concerns before generating a study plan?
+        </label>
+
+        <textarea id="topics" name="topics" rows="4"
+            class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., Sort by date? One class is harder than another?">{{ prefill }}</textarea>
+
+        <button type="submit"
+            class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+            Generate Study Plan
+        </button>
+    </form>
+
+    {% if advice %}
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-2xl font-semibold mb-4">Your Study Plan</h2>
+        <textarea id="markdown-source" class="hidden">{{ advice }}</textarea>
+        <div id="markdown-rendered" class="prose max-w-none"></div>
+    </div>
+    {% endif %}
+</div>
+
+<!--REQUIRED, the following js uses a library called markdown-it to render the markdown returned from openai to include the bold, bullet points, sections, etc-->
+<!-- github.com/markdown-it -->
+<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.0.0/dist/markdown-it.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const source = document.getElementById("markdown-source");
+    if (!source) return;
+
+    const md = window.markdownit({html: true, linkify: true, typographer: true});
+
+    const markdownText = source.value;
+    const rendered = md.render(markdownText);
+
+    document.getElementById("markdown-rendered").innerHTML = rendered;
+});
+</script>
+
+{% endblock %}
